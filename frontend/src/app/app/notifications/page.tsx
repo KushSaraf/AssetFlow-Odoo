@@ -165,7 +165,7 @@ export default function NotificationsPage() {
                   <Bell size={16} className={`shrink-0 mt-0.5 ${!n.read_at ? 'text-[#714B67]' : 'text-[#6C757D]'}`} />
                   <div className="flex-1 space-y-1">
                     <p className={`text-xs text-[#1F1F1F] leading-normal ${!n.read_at ? 'font-medium' : ''}`}>
-                      {n.payload.message}
+                      {n.payload.message || `System Update: ${n.type}`}
                     </p>
                     <span className="text-[10px] text-[#6C757D] block">
                       {new Date(n.created_at).toLocaleString([], {
@@ -196,7 +196,7 @@ export default function NotificationsPage() {
         <DataTable
           columns={[
             { header: 'Trigger / Event Type', accessor: (row) => <span className="font-semibold text-xs text-[#714B67]">{row.type}</span> },
-            { header: 'Action Details / Event Message', accessor: (row) => row.payload.message },
+            { header: 'Action Details / Event Message', accessor: (row) => row.payload.message || `System Update: ${row.type}` },
             {
               header: 'Event Timestamp',
               accessor: (row) => (

@@ -319,7 +319,7 @@ export default function MaintenancePage() {
         <form className="space-y-4">
           <div>
             <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider mb-1">
-              Select Asset
+              Select Asset <span className="text-red-500">*</span>
             </label>
             <select
               value={assetId}
@@ -337,7 +337,7 @@ export default function MaintenancePage() {
 
           <div>
             <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider mb-1">
-              Priority Urgency
+              Priority Urgency <span className="text-red-500">*</span>
             </label>
             <select
               value={priority}
@@ -353,7 +353,7 @@ export default function MaintenancePage() {
 
           <div>
             <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider mb-1">
-              Detailed Issue Description
+              Detailed Issue Description <span className="text-red-500">*</span>
             </label>
             <textarea
               value={issue}
@@ -520,7 +520,7 @@ export default function MaintenancePage() {
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider mb-1">
-              Technician Name (or service vendor)
+              Technician Name (or service vendor) <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -562,7 +562,7 @@ export default function MaintenancePage() {
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider mb-1">
-              Resolution Check-in Notes
+              Resolution Check-in Notes <span className="text-red-500">*</span>
             </label>
             <textarea
               value={resolveNotes}
@@ -603,7 +603,7 @@ export default function MaintenancePage() {
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-semibold text-[#6C757D] uppercase tracking-wider mb-1">
-              Rejection Rationale
+              Rejection Rationale <span className="text-red-500">*</span>
             </label>
             <textarea
               value={rejectReason}

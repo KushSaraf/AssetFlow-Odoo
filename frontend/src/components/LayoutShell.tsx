@@ -207,7 +207,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
                             !n.read_at ? 'bg-[#714B67]/5 font-medium' : 'text-[#6C757D]'
                           }`}
                         >
-                          <div className="line-clamp-2">{n.payload.message}</div>
+                          <div className="line-clamp-2">
+                            {n.payload.message || `System Update: ${n.type}`}
+                          </div>
                           <div className="mt-1 text-[10px] text-[#6C757D]">
                             {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>

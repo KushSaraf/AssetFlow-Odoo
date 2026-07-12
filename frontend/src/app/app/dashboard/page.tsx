@@ -42,6 +42,15 @@ interface Notification {
   created_at: string;
 }
 
+interface Booking {
+  id: string;
+  start_time: string;
+  end_time: string;
+  purpose: string | null;
+  status: string;
+  asset: { name: string; tag: string };
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { user, role } = useAuth();
@@ -64,6 +73,13 @@ export default function DashboardPage() {
   const { data: notifications = [], isLoading: activityLoading } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: () => apiFetch('/notifications'),
+    enabled: !!user,
+  });
+
+  // Fetch Upcoming Bookings
+  const { data: upcomingBookings = [], isLoading: bookingsLoading } = useQuery<Booking[]>({
+    queryKey: ['upcoming-bookings'],
+    queryFn: () => apiFetch('/bookings?my_bookings=true&upcoming=true'),
     enabled: !!user,
   });
 
@@ -163,6 +179,47 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Upcoming Bookings Panel */}
+          <div className="rounded-sm border border-[#E3E3E6] bg-white">
+            <div className="border-b border-[#E3E3E6] bg-white px-4 py-3 flex items-center justify-between">
+              <h2 className="text-xs font-semibold text-[#1F1F1F] uppercase tracking-wider flex items-center gap-2">
+                <Calendar size={14} className="text-[#714B67]" />
+                My Upcoming Bookings
+              </h2>
+              <span className="rounded-full bg-[#714B67]/10 text-[#714B67] px-2.5 py-0.5 text-[10px] font-bold">
+                {upcomingBookings.length} upcoming
+              </span>
+            </div>
+
+            <div className="divide-y divide-[#E3E3E6] max-h-64 overflow-y-auto">
+              {bookingsLoading ? (
+                <div className="px-4 py-8 text-center text-xs text-[#6C757D]">Loading...</div>
+              ) : upcomingBookings.length === 0 ? (
+                <div className="px-4 py-8 text-center text-xs text-[#6C757D]">
+                  No upcoming bookings scheduled.
+                </div>
+              ) : (
+                upcomingBookings.map((b) => (
+                  <div
+                    key={b.id}
+                    onClick={() => router.push(`/app/bookings`)}
+                    className="flex items-center justify-between p-3 hover:bg-[#F7F7F8] cursor-pointer"
+                  >
+                    <div>
+                      <div className="text-xs font-semibold text-[#1F1F1F]">
+                        {b.asset.name} ({b.asset.tag})
+                      </div>
+                      <div className="text-[10px] text-[#6C757D] mt-0.5">
+                        {new Date(b.start_time).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })} – {new Date(b.end_time).toLocaleTimeString([], { timeStyle: 'short' })}
+                        {b.purpose ? ` • ${b.purpose}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
           {/* Quick Actions Panel */}
           <div className="rounded-sm border border-[#E3E3E6] bg-white p-4">
             <h2 className="text-xs font-semibold text-[#1F1F1F] uppercase tracking-wider mb-3">Quick Actions</h2>
@@ -208,7 +265,9 @@ export default function DashboardPage() {
             ) : (
               notifications.map((n) => (
                 <div key={n.id} className="p-3 text-xs">
-                  <div className="text-[#1F1F1F] leading-normal">{n.payload.message}</div>
+                  <div className="text-[#1F1F1F] leading-normal">
+                    {n.payload.message || `System Update: ${n.type}`}
+                  </div>
                   <div className="mt-1 text-[10px] text-[#6C757D]">
                     {new Date(n.created_at).toLocaleString([], {
                       month: 'short',
