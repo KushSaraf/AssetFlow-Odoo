@@ -54,4 +54,9 @@ export class AllocationsController {
   ) {
     return this.allocationsService.rejectTransfer(id, req.user, reason);
   }
+
+  @Get('transfer-requests')
+  findAllTransfers(@Req() req: any) {
+    return this.allocationsService.findAllTransfers(req.user);
+  }
 }

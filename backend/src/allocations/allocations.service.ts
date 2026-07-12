@@ -191,4 +191,24 @@ export class AllocationsService {
       },
     });
   }
+
+  async findAllTransfers(user: any) {
+    const where: any = {};
+    if (user.role === 'Employee') {
+      where.requested_by = user.id;
+    }
+    return this.prisma.transfer_request.findMany({
+      where,
+      include: {
+        from_allocation: {
+          include: {
+            asset: true,
+            employee: true,
+            department: true,
+          },
+        },
+        requester: true,
+      },
+    });
+  }
 }
