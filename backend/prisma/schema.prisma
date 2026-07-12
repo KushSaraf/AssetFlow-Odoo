@@ -1,0 +1,268 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model department {
+  id                   String       @id @default(uuid())
+  name                 String       @unique
+  parent_department_id String?
+  head_employee_id     String?
+  status               String       @default("Active") // Active/Inactive
+  
+  parent_department    department?  @relation("DepartmentHierarchy", fields: [parent_department_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  child_departments    department[] @relation("DepartmentHierarchy")
+  
+  head_employee        employee?    @relation("DepartmentHead", fields: [head_employee_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  employees            employee[]   @relation("EmployeeDepartment")
+  
+  assets               asset[]      @relation("AssetDepartment")
+  allocations          allocation[] @relation("AllocationDepartment")
+  audit_cycles         audit_cycle[] @relation("AuditCycleDepartment")
+}
+
+model employee {
+  id               String       @id @default(uuid())
+  name             String
+  email            String       @unique
+  password_hash    String
+  department_id    String?
+  role             String       @default("Employee") // Admin, Asset Manager, Department Head, Employee
+  status           String       @default("Active") // Active/Inactive
+  
+  department       department?  @relation("EmployeeDepartment", fields: [department_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  headed_department department[] @relation("DepartmentHead")
+  
+  allocations_made      allocation[] @relation("AllocatedBy")
+  allocations_received  allocation[] @relation("AllocatedToEmployee")
+  
+  transfer_requests     transfer_request[] @relation("RequestedBy")
+  transfer_approvals    transfer_request[] @relation("TransferApprover")
+  
+  bookings              resource_booking[] @relation("BookedBy")
+  
+  maintenance_requests  maintenance_request[] @relation("MaintenanceRaisedBy")
+  maintenance_approvals maintenance_request[] @relation("MaintenanceApprover")
+  
+  audit_assignments     audit_assignment[] @relation("AuditAssignedTo")
+  audit_findings        audit_finding[]    @relation("FindingRecordedBy")
+  
+  notifications         notification[]     @relation("NotificationRecipient")
+  activity_logs         activity_log[]     @relation("ActivityLogActor")
+}
+
+model asset_category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  status      String   @default("Active")
+  
+  fields      asset_category_field[] @relation("CategoryFields")
+  assets      asset[]                @relation("AssetCategory")
+}
+
+model asset_category_field {
+  id          String   @id @default(uuid())
+  category_id String
+  field_name  String
+  field_type  String
+  required    Boolean  @default(false)
+  
+  category    asset_category @relation("CategoryFields", fields: [category_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  values      asset_custom_field_value[] @relation("FieldValues")
+}
+
+model asset_custom_field_value {
+  id                String   @id @default(uuid())
+  asset_id          String
+  category_field_id String
+  value             String
+  
+  asset             asset                @relation("AssetFieldValues", fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  category_field    asset_category_field @relation("FieldValues", fields: [category_field_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model asset {
+  id               String   @id @default(uuid())
+  tag              String   @unique
+  name             String
+  category_id      String
+  department_id    String?
+  serial_number    String?  @unique
+  acquisition_date DateTime
+  acquisition_cost Float?
+  condition        String
+  location         String?
+  status           String   @default("Available")
+  is_bookable      Boolean  @default(false)
+  
+  category         asset_category @relation("AssetCategory", fields: [category_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  department       department?    @relation("AssetDepartment", fields: [department_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  
+  custom_fields    asset_custom_field_value[] @relation("AssetFieldValues")
+  documents        asset_document[]           @relation("AssetDocuments")
+  allocations      allocation[]               @relation("AssetAllocations")
+  bookings         resource_booking[]         @relation("AssetBookings")
+  maintenance      maintenance_request[]      @relation("AssetMaintenance")
+  audit_findings   audit_finding[]            @relation("AssetAuditFindings")
+
+  @@index([tag])
+  @@index([status])
+  @@index([department_id])
+  @@index([category_id])
+}
+
+model asset_document {
+  id          String   @id @default(uuid())
+  asset_id    String
+  file_url    String
+  type        String
+  uploaded_at DateTime @default(now())
+  
+  asset       asset    @relation("AssetDocuments", fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model allocation {
+  id                   String    @id @default(uuid())
+  asset_id             String
+  employee_id          String?
+  department_id        String?
+  allocated_by         String
+  allocated_at         DateTime  @default(now())
+  expected_return_date DateTime?
+  returned_at          DateTime?
+  condition_in         String?
+  condition_out        String?
+  checkin_notes        String?
+  
+  asset                asset       @relation("AssetAllocations", fields: [asset_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  employee             employee?   @relation("AllocatedToEmployee", fields: [employee_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  department           department? @relation("AllocationDepartment", fields: [department_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  allocator            employee    @relation("AllocatedBy", fields: [allocated_by], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  
+  transfer_requests    transfer_request[] @relation("TransferFromAllocation")
+
+  @@index([asset_id, returned_at])
+}
+
+model transfer_request {
+  id                 String    @id @default(uuid())
+  asset_id           String
+  from_allocation_id String
+  requested_by       String
+  to_employee_id     String?
+  to_department_id   String?
+  approver_id        String?
+  status             String    @default("Requested")
+  reason             String?
+  decided_at         DateTime?
+  
+  from_allocation    allocation @relation("TransferFromAllocation", fields: [from_allocation_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  requester          employee   @relation("RequestedBy", fields: [requested_by], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  approver           employee?  @relation("TransferApprover", fields: [approver_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+}
+
+model resource_booking {
+  id                         String    @id @default(uuid())
+  asset_id                   String
+  booked_by                  String
+  on_behalf_of_department_id String?
+  start_time                 DateTime
+  end_time                   DateTime
+  purpose                    String?
+  status                     String    @default("Upcoming")
+  
+  asset                      asset     @relation("AssetBookings", fields: [asset_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  booker                     employee  @relation("BookedBy", fields: [booked_by], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([asset_id, start_time])
+}
+
+model maintenance_request {
+  id                      String    @id @default(uuid())
+  asset_id                String
+  raised_by               String
+  issue                   String
+  priority                String
+  status                  String    @default("Pending")
+  approver_id             String?
+  technician              String?
+  resolution_notes        String?
+  resolved_at             DateTime?
+  source_audit_finding_id String?   @unique
+  
+  asset                   asset     @relation("AssetMaintenance", fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  raiser                  employee  @relation("MaintenanceRaisedBy", fields: [raised_by], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  approver                employee? @relation("MaintenanceApprover", fields: [approver_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  source_finding          audit_finding? @relation("MaintenanceFromFinding", fields: [source_audit_finding_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+}
+
+model audit_cycle {
+  id                  String    @id @default(uuid())
+  name                String
+  scope_department_id String?
+  scope_location      String?
+  start_date          DateTime
+  end_date            DateTime
+  status              String    @default("Draft")
+  closed_at           DateTime?
+  
+  department          department? @relation("AuditCycleDepartment", fields: [scope_department_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  assignments         audit_assignment[] @relation("CycleAssignments")
+  findings            audit_finding[]    @relation("CycleFindings")
+}
+
+model audit_assignment {
+  id          String   @id @default(uuid())
+  cycle_id    String
+  auditor_id  String
+  
+  cycle       audit_cycle @relation("CycleAssignments", fields: [cycle_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  auditor     employee    @relation("AuditAssignedTo", fields: [auditor_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model audit_finding {
+  id          String   @id @default(uuid())
+  cycle_id    String
+  asset_id    String
+  result      String
+  notes       String?
+  recorded_by String
+  recorded_at DateTime @default(now())
+  
+  cycle       audit_cycle @relation("CycleFindings", fields: [cycle_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  asset       asset       @relation("AssetAuditFindings", fields: [asset_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  recorder    employee    @relation("FindingRecordedBy", fields: [recorded_by], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  
+  resulting_maintenance maintenance_request? @relation("MaintenanceFromFinding")
+}
+
+model notification {
+  id           String    @id @default(uuid())
+  recipient_id String
+  type         String
+  payload      Json
+  read_at      DateTime?
+  created_at   DateTime  @default(now())
+  
+  recipient    employee  @relation("NotificationRecipient", fields: [recipient_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([recipient_id, read_at])
+}
+
+model activity_log {
+  id          String   @id @default(uuid())
+  actor_id    String
+  action      String
+  entity_type String
+  entity_id   String
+  created_at  DateTime @default(now())
+  
+  actor       employee @relation("ActivityLogActor", fields: [actor_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([entity_type, entity_id])
+}
