@@ -25,16 +25,17 @@ export class BookingsService {
       where.start_time = { gte: date, lt: nextDay };
     }
 
-    if (filters.my_bookings === 'true') {
+    if (String(filters.my_bookings) === 'true') {
       where.booked_by = user.id;
     }
-    if (filters.upcoming === 'true') {
+    if (String(filters.upcoming) === 'true') {
       where.start_time = { gte: new Date() };
       where.status = { not: 'Cancelled' };
     }
 
     return this.prisma.resource_booking.findMany({
       where,
+      orderBy: { start_time: 'asc' },
       include: { asset: true, booker: true },
     });
   }
