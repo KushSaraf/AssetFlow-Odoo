@@ -1,0 +1,38 @@
+
+> backend@0.0.1 build
+> nest build
+
+[96msrc/notifications/notifications.service.ts[0m:[93m31[0m:[93m16[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'user_id' does not exist in type 'notificationWhereInput'.
+
+[7m31[0m       where: { user_id: user.id },
+[7m  [0m [91m               ~~~~~~~[0m
+[96msrc/notifications/notifications.service.ts[0m:[93m38[0m:[93m20[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'user_id' does not exist in type 'notificationWhereInput'.
+
+[7m38[0m       where: { id, user_id: user.id },
+[7m  [0m [91m                   ~~~~~~~[0m
+
+  [96mnode_modules/.prisma/client/index.d.ts[0m:[93m20045[0m:[93m5[0m
+    [7m20045[0m     where?: notificationWhereInput
+    [7m     [0m [96m    ~~~~~[0m
+    The expected type comes from property 'where' which is declared here on type '{ data: (Without<notificationUpdateManyMutationInput, notificationUncheckedUpdateManyInput> & notificationUncheckedUpdateManyInput) | (Without<...> & notificationUpdateManyMutationInput); where?: notificationWhereInput | undefined; limit?: number | undefined; }'
+[96msrc/notifications/notifications.service.ts[0m:[93m39[0m:[93m15[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'is_read' does not exist in type '(Without<notificationUpdateManyMutationInput, notificationUncheckedUpdateManyInput> & notificationUncheckedUpdateManyInput) | (Without<...> & notificationUpdateManyMutationInput)'.
+
+[7m39[0m       data: { is_read: true },
+[7m  [0m [91m              ~~~~~~~[0m
+
+  [96mnode_modules/.prisma/client/index.d.ts[0m:[93m20041[0m:[93m5[0m
+    [7m20041[0m     data: XOR<notificationUpdateManyMutationInput, notificationUncheckedUpdateManyInput>
+    [7m     [0m [96m    ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type '{ data: (Without<notificationUpdateManyMutationInput, notificationUncheckedUpdateManyInput> & notificationUncheckedUpdateManyInput) | (Without<...> & notificationUpdateManyMutationInput); where?: notificationWhereInput | undefined; limit?: number | undefined; }'
+[96msrc/notifications/notifications.service.ts[0m:[93m58[0m:[93m13[0m - [91merror[0m[90m TS2353: [0mObject literal may only specify known properties, and 'user_id' does not exist in type '(Without<notificationCreateInput, notificationUncheckedCreateInput> & notificationUncheckedCreateInput) | (Without<...> & notificationCreateInput)'.
+
+[7m58[0m             user_id: alloc.employee_id,
+[7m  [0m [91m            ~~~~~~~[0m
+
+  [96mnode_modules/.prisma/client/index.d.ts[0m:[93m19971[0m:[93m5[0m
+    [7m19971[0m     data: XOR<notificationCreateInput, notificationUncheckedCreateInput>
+    [7m     [0m [96m    ~~~~[0m
+    The expected type comes from property 'data' which is declared here on type '{ select?: notificationSelect<DefaultArgs> | null | undefined; omit?: notificationOmit<DefaultArgs> | null | undefined; include?: notificationInclude<...> | ... 1 more ... | undefined; data: (Without<...> & notificationUncheckedCreateInput) | (Without<...> & notificationCreateInput); }'
+
+Found 4 error(s).
+

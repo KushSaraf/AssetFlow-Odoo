@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { AllocationsController } from './allocations.controller';
 import { AllocationsService } from './allocations.service';
+import { AllocationsController } from './allocations.controller';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Module({
+  imports: [PrismaModule],
   controllers: [AllocationsController],
-  providers: [AllocationsService]
+  providers: [AllocationsService],
 })
 export class AllocationsModule {}

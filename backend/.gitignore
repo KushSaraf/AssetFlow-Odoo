@@ -1,10 +1,15 @@
-node_modules
-# Keep environment variables out of version control
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# logs
+*.log
+
+# environment
 .env
+.env.*
 
-/generated/prisma
-
-# AI agents
-AGENTS.md
-.cursorrules
-.claude*
+# TypeScript
+*.tsbuildinfo

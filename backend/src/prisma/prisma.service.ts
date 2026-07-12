@@ -4,7 +4,14 @@ import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 
 @Injectable()
+<<<<<<< HEAD
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+=======
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+>>>>>>> 9090c73 (Completed Backend as per PLAN-A.)
   private pool: Pool;
 
   constructor() {
