@@ -69,7 +69,6 @@ export default function DashboardPage() {
 
   const getKpiValue = (val: number | undefined) => {
     if (kpisLoading) return '...';
-    if (user?.department_id === null && role !== 'Admin') return '—';
     return val !== undefined ? val : 0;
   };
 
