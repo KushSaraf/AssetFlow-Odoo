@@ -43,7 +43,7 @@ export default function KanbanBoard<T>({
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex items-start gap-4 overflow-x-auto pb-4 h-full">
       {columns.map((col) => {
         const colItems = items.filter((item) => getColId(item) === col.id);
 
@@ -52,10 +52,10 @@ export default function KanbanBoard<T>({
             key={col.id}
             onDragOver={handleDragOver}
             onDrop={(e) => handleDrop(e, col.id)}
-            className="flex w-72 shrink-0 flex-col rounded-sm border border-[#E3E3E6] bg-white"
+            className="flex w-72 shrink-0 flex-col rounded-sm border border-[#E3E3E6] bg-white max-h-full"
           >
             {/* Column Header */}
-            <div className="flex items-center justify-between border-b border-[#E3E3E6] bg-[#F7F7F8] px-3 py-2">
+            <div className="flex items-center justify-between border-b border-[#E3E3E6] bg-[#F7F7F8] px-3 py-2 shrink-0">
               <span className="text-xs font-semibold text-[#1F1F1F]">{col.name}</span>
               <span className="rounded-full bg-white border border-[#E3E3E6] px-2 py-0.5 text-[10px] font-medium text-[#6C757D]">
                 {colItems.length}
@@ -63,7 +63,7 @@ export default function KanbanBoard<T>({
             </div>
 
             {/* Column Body */}
-            <div className="flex-1 space-y-2 p-2 min-h-[300px] bg-[#F7F7F8]/50">
+            <div className="overflow-y-auto space-y-2 p-2 bg-[#F7F7F8]/50 min-h-[60px]">
               {colItems.length === 0 ? (
                 <div className="flex h-32 items-center justify-center border border-dashed border-[#E3E3E6] rounded-sm text-[11px] text-[#6C757D]">
                   Drag items here

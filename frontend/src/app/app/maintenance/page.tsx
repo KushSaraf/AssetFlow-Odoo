@@ -197,9 +197,9 @@ export default function MaintenancePage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col flex-1 space-y-4">
       {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between shrink-0">
         <div>
           <h1 className="text-xl font-semibold text-[#1F1F1F]">Maintenance Management</h1>
           <p className="text-xs text-[#6C757D] mt-0.5">Track machine repairs, diagnostics, and routine equipment servicing.</p>
@@ -236,14 +236,15 @@ export default function MaintenancePage() {
       </div>
 
       {/* Critical Trigger Side Effect Warning */}
-      <div className="rounded-sm border border-[#714B67]/20 bg-[#714B67]/5 px-3 py-2 text-[11px] text-[#714B67] font-medium">
+      <div className="rounded-sm border border-[#714B67]/20 bg-[#714B67]/5 px-3 py-2 text-[11px] text-[#714B67] font-medium shrink-0">
         ⚠️ <strong>Workflow Triggers:</strong> Approving moves the asset to <strong>Under Maintenance</strong>; resolving
         returns it to its prior allocation status or Available.
       </div>
 
       {/* Kanban Board Mode */}
-      {viewMode === 'kanban' ? (
-        <KanbanBoard
+      <div className="flex-1 overflow-hidden">
+        {viewMode === 'kanban' ? (
+          <KanbanBoard
           columns={kanbanColumns}
           items={requests}
           getColId={(item) => item.status}
@@ -291,6 +292,7 @@ export default function MaintenancePage() {
           emptyMessage="No maintenance requests raised yet."
         />
       )}
+      </div>
 
       {/* Raise Request Modal */}
       <Modal

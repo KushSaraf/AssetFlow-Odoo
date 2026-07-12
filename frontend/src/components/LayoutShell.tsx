@@ -254,7 +254,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 flex flex-col overflow-y-auto p-6">
           {user.department_id === null && role !== 'Admin' && (
             <div className="mb-4 rounded-sm border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex items-center justify-between">
               <span>You haven't been assigned to a department yet — contact your Admin.</span>
