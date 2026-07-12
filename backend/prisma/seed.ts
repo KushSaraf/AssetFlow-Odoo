@@ -1,6 +1,6 @@
 /**
  * AssetFlow — Full Demo Seed Script
- * Covers all §5 seed requirements from docs/database/PLAN.md:
+ * Populates realistic demo data so every screen has content on first load:
  *   - 3 departments with heads
  *   - ~8 employees across all roles
  *   - 3 categories: Electronics, Furniture, Vehicles

@@ -108,7 +108,7 @@ export class BookingsService {
 
     // Overlap check + insert inside one transaction. SQLite serializes
     // writes, so this is the race-safe equivalent of Postgres' EXCLUDE
-    // constraint (documented fallback in docs/database/PLAN.md §3).
+    // constraint (documented fallback in docs/ARCHITECTURE.md).
     const booking = await this.prisma.$transaction(async (tx) => {
       const overlap = await tx.resource_booking.findFirst({
         where: {

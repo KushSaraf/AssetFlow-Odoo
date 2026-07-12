@@ -16,7 +16,7 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
-    // Business-critical DB constraint (docs/database/PLAN.md §3): one open
+    // Business-critical DB constraint (docs/ARCHITECTURE.md): one open
     // allocation per asset. Prisma's DSL can't express partial indexes, and
     // SQLite has no EXCLUDE constraint for booking overlaps — that one stays
     // an in-transaction check in BookingsService.
