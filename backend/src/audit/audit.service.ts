@@ -49,10 +49,42 @@ export class AuditService {
   async findOne(id: string, user: any) {
     const cycle = await this.prisma.audit_cycle.findUnique({
       where: { id },
-      include: { findings: true, assignments: true },
+      include: {
+        findings: {
+          include: {
+            asset: true,
+            recorder: true,
+          },
+        },
+        assignments: {
+          include: {
+            auditor: true,
+          },
+        },
+        department: true,
+      },
     });
     if (!cycle) throw new NotFoundException();
-    return cycle;
+
+    // Fetch assets in scope
+    const where: any = {};
+    if (cycle.scope_department_id) {
+      where.department_id = cycle.scope_department_id;
+    }
+    if (cycle.scope_location) {
+      where.location = cycle.scope_location;
+    }
+
+    const assets = await this.prisma.asset.findMany({ where });
+    const checklist = assets.map((asset) => ({
+      id: asset.id,
+      asset,
+    }));
+
+    return {
+      ...cycle,
+      checklist,
+    };
   }
 
   async recordFinding(id: string, user: any, data: any) {
