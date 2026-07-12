@@ -78,6 +78,19 @@ export class AllocationsService {
         data: { status: 'Allocated' },
       });
 
+      if (data.employee_id) {
+        const asset = await tx.asset.findUnique({ where: { id: data.asset_id } });
+        if (asset) {
+          await tx.notification.create({
+            data: {
+              recipient_id: data.employee_id,
+              type: 'AssetAssigned',
+              payload: { message: `You have been assigned the asset ${asset.name} (${asset.tag}).` },
+            },
+          });
+        }
+      }
+
       return allocation;
     });
   }
@@ -169,7 +182,7 @@ export class AllocationsService {
         },
       });
 
-      return tx.transfer_request.update({
+      const transfer = await tx.transfer_request.update({
         where: { id },
         data: {
           status: 'Approved',
@@ -177,11 +190,36 @@ export class AllocationsService {
           decided_at: new Date(),
         },
       });
+
+      const asset = await tx.asset.findUnique({ where: { id: req.asset_id } });
+      if (asset) {
+        await tx.notification.create({
+          data: {
+            recipient_id: req.requested_by,
+            type: 'TransferApproved',
+            payload: { message: `Your transfer request for ${asset.name} (${asset.tag}) has been approved.` },
+          },
+        });
+
+        if (req.to_employee_id) {
+          await tx.notification.create({
+            data: {
+              recipient_id: req.to_employee_id,
+              type: 'AssetAssigned',
+              payload: { message: `You have been assigned ${asset.name} (${asset.tag}) via a transfer request.` },
+            },
+          });
+        }
+      }
+
+      return transfer;
     });
   }
 
   async rejectTransfer(id: string, user: any, reason: string) {
-    return this.prisma.transfer_request.update({
+    const req = await this.prisma.transfer_request.findUnique({ where: { id }, include: { asset: true } });
+    
+    const update = await this.prisma.transfer_request.update({
       where: { id },
       data: {
         status: 'Rejected',
@@ -190,6 +228,18 @@ export class AllocationsService {
         reason,
       },
     });
+
+    if (req && req.asset) {
+      await this.prisma.notification.create({
+        data: {
+          recipient_id: req.requested_by,
+          type: 'TransferRejected',
+          payload: { message: `Your transfer request for ${req.asset.name} (${req.asset.tag}) has been rejected. Reason: ${reason}` },
+        },
+      });
+    }
+
+    return update;
   }
 
   async findAllTransfers(user: any) {

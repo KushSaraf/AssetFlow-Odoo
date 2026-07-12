@@ -42,15 +42,30 @@ export class MaintenanceService {
         where: { id: req.asset_id },
         data: { status: 'Under Maintenance' },
       });
-      return tx.maintenance_request.update({
+      const updated = await tx.maintenance_request.update({
         where: { id },
         data: { status: 'Approved', approver_id: user.id },
       });
+
+      const asset = await tx.asset.findUnique({ where: { id: req.asset_id } });
+      if (asset) {
+        await tx.notification.create({
+          data: {
+            recipient_id: req.raised_by,
+            type: 'MaintenanceApproved',
+            payload: { message: `Your maintenance request for ${asset.name} (${asset.tag}) has been approved.` },
+          },
+        });
+      }
+
+      return updated;
     });
   }
 
   async reject(id: string, user: any, reason: string) {
-    return this.prisma.maintenance_request.update({
+    const req = await this.prisma.maintenance_request.findUnique({ where: { id }, include: { asset: true } });
+    
+    const update = await this.prisma.maintenance_request.update({
       where: { id },
       data: {
         status: 'Rejected',
@@ -58,6 +73,18 @@ export class MaintenanceService {
         resolution_notes: reason,
       },
     });
+
+    if (req && req.asset) {
+      await this.prisma.notification.create({
+        data: {
+          recipient_id: req.raised_by,
+          type: 'MaintenanceRejected',
+          payload: { message: `Your maintenance request for ${req.asset.name} (${req.asset.tag}) was rejected.` },
+        },
+      });
+    }
+
+    return update;
   }
 
   async assignTechnician(id: string, technician: string) {
@@ -92,10 +119,23 @@ export class MaintenanceService {
         data: { status: nextStatus },
       });
 
-      return tx.maintenance_request.update({
+      const updated = await tx.maintenance_request.update({
         where: { id },
         data: { status: 'Resolved', resolved_at: new Date(), resolution_notes },
       });
+
+      const asset = await tx.asset.findUnique({ where: { id: req.asset_id } });
+      if (asset) {
+        await tx.notification.create({
+          data: {
+            recipient_id: req.raised_by,
+            type: 'MaintenanceResolved',
+            payload: { message: `Maintenance for ${asset.name} (${asset.tag}) is now resolved.` },
+          },
+        });
+      }
+
+      return updated;
     });
   }
 }

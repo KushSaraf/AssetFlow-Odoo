@@ -60,7 +60,7 @@ export class BookingsService {
       });
     }
 
-    return this.prisma.resource_booking.create({
+    const booking = await this.prisma.resource_booking.create({
       data: {
         asset_id: data.asset_id,
         booked_by: user.id,
@@ -70,6 +70,19 @@ export class BookingsService {
         on_behalf_of_department_id: data.on_behalf_of_department_id,
       },
     });
+
+    const asset = await this.prisma.asset.findUnique({ where: { id: data.asset_id } });
+    if (asset) {
+      await this.prisma.notification.create({
+        data: {
+          recipient_id: user.id,
+          type: 'BookingConfirmed',
+          payload: { message: `Your booking for ${asset.name} (${asset.tag}) has been confirmed for ${start_time.toLocaleDateString()}.` },
+        },
+      });
+    }
+
+    return booking;
   }
 
   async update(id: string, user: any, data: any) {
@@ -110,9 +123,23 @@ export class BookingsService {
   }
 
   async cancel(id: string, user: any, reason?: string) {
-    return this.prisma.resource_booking.update({
+    const booking = await this.prisma.resource_booking.findUnique({ where: { id }, include: { asset: true } });
+    
+    const update = await this.prisma.resource_booking.update({
       where: { id },
       data: { status: 'Cancelled' }, // Could also log reason if schema supported it
     });
+
+    if (booking && booking.asset) {
+      await this.prisma.notification.create({
+        data: {
+          recipient_id: booking.booked_by,
+          type: 'BookingCancelled',
+          payload: { message: `Your booking for ${booking.asset.name} (${booking.asset.tag}) has been successfully canceled.` },
+        },
+      });
+    }
+
+    return update;
   }
 }
