@@ -37,7 +37,7 @@ export default function NotificationsPage() {
 
   // Mutations
   const markReadMutation = useMutation({
-    mutationFn: (id: string) => apiFetch(`/notifications/${id}/read`, { method: 'POST' }),
+    mutationFn: (id: string) => apiFetch(`/notifications/${id}/read`, { method: 'PATCH' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast('Notification marked as read.');
@@ -46,7 +46,7 @@ export default function NotificationsPage() {
   });
 
   const markAllReadMutation = useMutation({
-    mutationFn: () => apiFetch('/notifications/read-all', { method: 'POST' }),
+    mutationFn: () => apiFetch('/notifications/read-all', { method: 'PATCH' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast('All notifications marked as read.');

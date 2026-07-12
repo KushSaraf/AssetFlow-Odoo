@@ -46,6 +46,13 @@ export class NotificationsService {
     });
   }
 
+  async markAllAsRead(user: AuthUser) {
+    return this.prisma.notification.updateMany({
+      where: { recipient_id: user.id, read_at: null },
+      data: { read_at: new Date() },
+    });
+  }
+
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleOverdueAllocations() {
     this.logger.debug('Running overdue allocations check');
