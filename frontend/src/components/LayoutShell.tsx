@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -40,6 +40,22 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showBellDropdown, setShowBellDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  const bellRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (bellRef.current && !bellRef.current.contains(event.target as Node)) {
+        setShowBellDropdown(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfileDropdown(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch notifications
   const { data: notifications = [] } = useQuery<Notification[]>({
@@ -163,7 +179,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
           {/* Actions & Profile */}
           <div className="flex items-center gap-4">
             {/* Notification Bell */}
-            <div className="relative">
+            <div className="relative" ref={bellRef}>
               <button
                 onClick={() => {
                   setShowBellDropdown(!showBellDropdown);
@@ -222,7 +238,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
             </div>
 
             {/* Profile Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={profileRef}>
               <button
                 onClick={() => {
                   setShowProfileDropdown(!showProfileDropdown);
