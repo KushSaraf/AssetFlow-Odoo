@@ -14,17 +14,23 @@
 
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 
-const adapter = new PrismaLibSql({
-  url: process.env.DATABASE_URL || 'file:./dev.db',
-});
+const connectionString = process.env.DATABASE_URL!;
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-
 
 async function main() {
   console.log('🌱 Starting full AssetFlow seed...');
+
+  const existingDept = await prisma.department.findFirst();
+  if (existingDept) {
+    console.log('✅ Database already seeded! Skipping seed.');
+    return;
+  }
 
   const passwordHash = await bcrypt.hash('password123', 10);
 
@@ -146,7 +152,11 @@ async function main() {
       status: 'Active',
       fields: {
         create: [
-          { field_name: 'Warranty Period', field_type: 'number', required: false },
+          {
+            field_name: 'Warranty Period',
+            field_type: 'number',
+            required: false,
+          },
         ],
       },
     },
@@ -169,7 +179,8 @@ async function main() {
   // ─── 5. ASSETS (~15, every status covered) ───────────────────────────────
   const today = new Date();
   const past = (daysAgo: number) => new Date(Date.now() - daysAgo * 86_400_000);
-  const future = (daysFromNow: number) => new Date(Date.now() + daysFromNow * 86_400_000);
+  const future = (daysFromNow: number) =>
+    new Date(Date.now() + daysFromNow * 86_400_000);
 
   // AF-0114 — Dell Laptop (Allocated to Priya Shah)
   const laptop = await prisma.asset.create({
@@ -605,10 +616,7 @@ async function main() {
       end_date: future(7),
       status: 'In Progress',
       assignments: {
-        create: [
-          { auditor_id: kamya.id },
-          { auditor_id: vikram.id },
-        ],
+        create: [{ auditor_id: kamya.id }, { auditor_id: vikram.id }],
       },
     },
   });
@@ -657,56 +665,90 @@ async function main() {
       {
         recipient_id: priya.id,
         type: 'AssetAssigned',
-        payload: { asset_tag: 'AF-0114', asset_name: 'Dell Laptop', allocated_by: 'Kamya Nair' },
+        payload: {
+          asset_tag: 'AF-0114',
+          asset_name: 'Dell Laptop',
+          allocated_by: 'Kamya Nair',
+        },
         read_at: null,
         created_at: past(30),
       },
       {
         recipient_id: raj.id,
         type: 'OverdueReturnAlert',
-        payload: { asset_tag: 'AF-0045', asset_name: 'Toyota HiAce Van', days_overdue: 5 },
+        payload: {
+          asset_tag: 'AF-0045',
+          asset_name: 'Toyota HiAce Van',
+          days_overdue: 5,
+        },
         read_at: null,
         created_at: past(1),
       },
       {
         recipient_id: sana.id,
         type: 'OverdueReturnAlert',
-        payload: { asset_tag: 'AF-0045', asset_name: 'Toyota HiAce Van', department: 'Field Ops' },
+        payload: {
+          asset_tag: 'AF-0045',
+          asset_name: 'Toyota HiAce Van',
+          department: 'Field Ops',
+        },
         read_at: null,
         created_at: past(1),
       },
       {
         recipient_id: aditi.id,
         type: 'MaintenanceApproved',
-        payload: { asset_tag: 'AF-0062', asset_name: 'MacBook Pro 14"', approved_by: 'Kamya Nair' },
+        payload: {
+          asset_tag: 'AF-0062',
+          asset_name: 'MacBook Pro 14"',
+          approved_by: 'Kamya Nair',
+        },
         read_at: past(5),
         created_at: past(5),
       },
       {
         recipient_id: priya.id,
         type: 'BookingConfirmed',
-        payload: { asset_name: 'Room B2', start_time: todayAt(9, 0).toISOString(), end_time: todayAt(10, 0).toISOString() },
+        payload: {
+          asset_name: 'Room B2',
+          start_time: todayAt(9, 0).toISOString(),
+          end_time: todayAt(10, 0).toISOString(),
+        },
         read_at: past(1),
         created_at: past(1),
       },
       {
         recipient_id: kamya.id,
         type: 'AuditDiscrepancyFlagged',
-        payload: { asset_tag: 'AF-0010', asset_name: 'Logitech MX Keys Keyboard', result: 'Missing', cycle: 'Q3 Audit: Engineering Dept' },
+        payload: {
+          asset_tag: 'AF-0010',
+          asset_name: 'Logitech MX Keys Keyboard',
+          result: 'Missing',
+          cycle: 'Q3 Audit: Engineering Dept',
+        },
         read_at: null,
         created_at: past(2),
       },
       {
         recipient_id: vikram.id,
         type: 'AuditDiscrepancyFlagged',
-        payload: { asset_tag: 'AF-0062', asset_name: 'MacBook Pro 14"', result: 'Damaged', cycle: 'Q3 Audit: Engineering Dept' },
+        payload: {
+          asset_tag: 'AF-0062',
+          asset_name: 'MacBook Pro 14"',
+          result: 'Damaged',
+          cycle: 'Q3 Audit: Engineering Dept',
+        },
         read_at: null,
         created_at: past(2),
       },
       {
         recipient_id: priya.id,
         type: 'RoleUpdated',
-        payload: { old_role: 'Employee', new_role: 'Employee', note: 'Account active' },
+        payload: {
+          old_role: 'Employee',
+          new_role: 'Employee',
+          note: 'Account active',
+        },
         read_at: past(30),
         created_at: past(30),
       },
@@ -781,9 +823,15 @@ async function main() {
   console.log('  raj@assetflow.com         — Employee');
   console.log('');
   console.log('Demo scenarios ready:');
-  console.log('  • Room B2 booked 9:00–10:00 → attempt 9:30–10:30 to demo overlap rejection');
-  console.log('  • AF-0114 Dell Laptop allocated to Priya → attempt re-allocate to demo conflict modal');
-  console.log('  • AF-0045 Van overdue by 5 days → visible on Dashboard overdue panel');
+  console.log(
+    '  • Room B2 booked 9:00–10:00 → attempt 9:30–10:30 to demo overlap rejection',
+  );
+  console.log(
+    '  • AF-0114 Dell Laptop allocated to Priya → attempt re-allocate to demo conflict modal',
+  );
+  console.log(
+    '  • AF-0045 Van overdue by 5 days → visible on Dashboard overdue panel',
+  );
 }
 
 main()

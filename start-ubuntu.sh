@@ -32,6 +32,10 @@ set +e
 
 # 3. Start Backend
 echo ">>> [3/4] Starting Backend (NestJS on port 4000)..."
+if [ ! -d "node_modules" ]; then
+  echo "Installing backend dependencies..."
+  npm install
+fi
 npm run start:dev &
 BACKEND_PID=$!
 cd ..
@@ -39,6 +43,10 @@ cd ..
 # 4. Start Frontend
 echo ">>> [4/4] Starting Frontend (Next.js on port 3000)..."
 cd frontend
+if [ ! -d "node_modules" ]; then
+  echo "Installing frontend dependencies..."
+  npm install
+fi
 npm run dev &
 FRONTEND_PID=$!
 cd ..
