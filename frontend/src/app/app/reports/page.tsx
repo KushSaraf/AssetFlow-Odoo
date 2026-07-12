@@ -143,14 +143,46 @@ export default function ReportsPage() {
   };
 
   const handleExport = async (format: 'csv' | 'pdf') => {
-    try {
-      const res = await apiFetch(`/reports/export?type=${format}`);
-      if (res.url) {
-        window.open(res.url, '_blank');
-        toast(`Exporting report as ${format.toUpperCase()}...`);
+    if (format === 'pdf') {
+      toast('Opening print dialog. Save as PDF to export.');
+      setTimeout(() => window.print(), 500);
+      return;
+    }
+
+    if (format === 'csv') {
+      let csvContent = '';
+      if (activeTab === 'depreciation') {
+        csvContent += 'Asset Tag,Asset Name,Acquisition Cost,Current Value,Total Depreciation\n';
+        depreciation.forEach((row) => {
+          const cost = row.acquisition_cost || 0;
+          const dep = cost - row.current_value;
+          csvContent += `"${row.tag}","${row.name}",${cost},${row.current_value},${dep}\n`;
+        });
+      } else if (activeTab === 'maintenance') {
+        csvContent += 'Asset Tag,Asset Name,Total Maintenance Occurrences\n';
+        getMaintenanceFrequency().forEach((row) => {
+          csvContent += `"${row.tag}","${row.name}",${row.count}\n`;
+        });
+      } else if (activeTab === 'departments') {
+        csvContent += 'Department,Active Allocated Assets,Total Value Held\n';
+        getDepartmentSummaries().forEach((row) => {
+          csvContent += `"${row.name}",${row.count},${row.value}\n`;
+        });
+      } else {
+        toast('CSV export is only supported for tabular reports.', 'error');
+        return;
       }
-    } catch {
-      toast('Failed to trigger export.', 'error');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', `AssetFlow_${activeTab}_report.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast('CSV Downloaded successfully!');
     }
   };
 
