@@ -30,8 +30,8 @@ export class AllocationsController {
 
   @Roles('Admin', 'Asset Manager')
   @Post('allocations/:id/return')
-  returnAsset(@Param('id') id: string, @Body() body: any) {
-    return this.allocationsService.returnAsset(id, body);
+  returnAsset(@Param('id') id: string, @Req() req: any, @Body() body: any) {
+    return this.allocationsService.returnAsset(req.user, id, body);
   }
 
   @Post('transfer-requests')

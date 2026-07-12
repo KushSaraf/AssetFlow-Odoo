@@ -41,13 +41,22 @@ export class EmployeesController {
 
   @Roles('Admin')
   @Patch(':id/promote')
-  promote(@Param('id') id: string, @Body('role') role: string) {
-    return this.employeesService.promote(id, role);
+  promote(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body() body: { role: string; department_id?: string },
+  ) {
+    return this.employeesService.promote(
+      req.user,
+      id,
+      body.role,
+      body.department_id,
+    );
   }
 
   @Roles('Admin')
   @Patch(':id/revoke')
-  revoke(@Param('id') id: string) {
-    return this.employeesService.revoke(id);
+  revoke(@Param('id') id: string, @Req() req: any) {
+    return this.employeesService.revoke(req.user, id);
   }
 }

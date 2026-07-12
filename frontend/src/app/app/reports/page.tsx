@@ -8,12 +8,24 @@ import { useToast } from '../../../context/ToastContext';
 import DataTable from '../../../components/DataTable';
 import { ShieldAlert, BarChart3, Download, PieChart, TrendingUp, Calendar, Wrench } from 'lucide-react';
 
+interface RankedAsset {
+  asset_id: string;
+  tag: string;
+  name: string;
+  status: string;
+  usage_count: number;
+  last_used_at: string | null;
+}
+
 interface UtilizationData {
   total_assets: number;
   allocated: number;
   available: number;
   maintenance: number;
   utilization_rate: number;
+  most_used: RankedAsset[];
+  idle_assets: RankedAsset[];
+  idle_threshold_days: number;
 }
 
 interface DepreciationItem {
@@ -358,6 +370,42 @@ export default function ReportsPage() {
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-2 w-2 rounded-full bg-[#FD7E14]"></span> Maintenance
               </span>
+            </div>
+          </div>
+
+          {/* Most-used vs Idle (brief: "most-used vs. idle assets") */}
+          <div className="lg:col-span-3 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="space-y-2">
+              <h3 className="text-xs font-bold text-[#1F1F1F] uppercase tracking-wider flex items-center gap-1.5">
+                <TrendingUp size={14} className="text-[#714B67]" /> Most-Used Assets
+              </h3>
+              <DataTable
+                columns={[
+                  { header: 'Tag', accessor: (row: RankedAsset) => <span className="font-semibold">{row.tag}</span> },
+                  { header: 'Name', accessor: (row: RankedAsset) => row.name },
+                  { header: 'Allocations + Bookings', accessor: (row: RankedAsset) => row.usage_count },
+                ]}
+                data={utilization.most_used}
+                emptyMessage="Not enough data yet."
+              />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xs font-bold text-[#1F1F1F] uppercase tracking-wider">
+                Idle Assets (unused {utilization.idle_threshold_days}+ days)
+              </h3>
+              <DataTable
+                columns={[
+                  { header: 'Tag', accessor: (row: RankedAsset) => <span className="font-semibold">{row.tag}</span> },
+                  { header: 'Name', accessor: (row: RankedAsset) => row.name },
+                  {
+                    header: 'Last Used',
+                    accessor: (row: RankedAsset) =>
+                      row.last_used_at ? new Date(row.last_used_at).toLocaleDateString() : 'Never',
+                  },
+                ]}
+                data={utilization.idle_assets}
+                emptyMessage="No idle assets — everything is in use."
+              />
             </div>
           </div>
         </div>

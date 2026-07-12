@@ -23,6 +23,11 @@ export class NotificationsController {
     return this.notificationsService.getNotifications(req.user);
   }
 
+  @Get('activity-log')
+  getActivityLog(@Req() req: RequestWithUser) {
+    return this.notificationsService.getActivityLog(req.user);
+  }
+
   @Patch('notifications/read-all')
   markAllAsRead(@Req() req: RequestWithUser) {
     return this.notificationsService.markAllAsRead(req.user);

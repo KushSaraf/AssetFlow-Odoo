@@ -56,7 +56,8 @@ export class EmployeesService {
     }
   }
 
-  async promote(id: string, role: string) {
+  /** The ONLY place roles change (brief's non-self-elevation requirement). */
+  async promote(actor: any, id: string, role: string, department_id?: string) {
     if (!['Department Head', 'Asset Manager'].includes(role)) {
       throw new ForbiddenException({
         error: {
@@ -66,9 +67,9 @@ export class EmployeesService {
       });
     }
     try {
-      return await this.prisma.employee.update({
+      const updated = await this.prisma.employee.update({
         where: { id },
-        data: { role },
+        data: { role, ...(department_id ? { department_id } : {}) },
         select: {
           id: true,
           name: true,
@@ -78,16 +79,21 @@ export class EmployeesService {
           status: true,
         },
       });
-    } catch (e) {
-      throw new NotFoundException({
-        error: { code: 'not_found', message: 'Employee not found' },
-      });
+      await this.notifyRoleChange(actor, updated.id, role);
+      return updated;
+    } catch (e: any) {
+      if (e?.code === 'P2025' || e?.name === 'NotFoundError') {
+        throw new NotFoundException({
+          error: { code: 'not_found', message: 'Employee not found' },
+        });
+      }
+      throw e;
     }
   }
 
-  async revoke(id: string) {
+  async revoke(actor: any, id: string) {
     try {
-      return await this.prisma.employee.update({
+      const updated = await this.prisma.employee.update({
         where: { id },
         data: { role: 'Employee' },
         select: {
@@ -99,10 +105,34 @@ export class EmployeesService {
           status: true,
         },
       });
-    } catch (e) {
-      throw new NotFoundException({
-        error: { code: 'not_found', message: 'Employee not found' },
-      });
+      await this.notifyRoleChange(actor, updated.id, 'Employee');
+      return updated;
+    } catch (e: any) {
+      if (e?.code === 'P2025' || e?.name === 'NotFoundError') {
+        throw new NotFoundException({
+          error: { code: 'not_found', message: 'Employee not found' },
+        });
+      }
+      throw e;
+    }
+  }
+
+  /** Role Updated notification to the affected employee (ui-spec §6). */
+  private async notifyRoleChange(actor: any, employeeId: string, role: string) {
+    await this.prisma.notification.create({
+      data: {
+        recipient_id: employeeId,
+        type: 'RoleUpdated',
+        payload: { message: `Your role has been updated to ${role}.` },
+      },
+    });
+    if (actor?.id) {
+      await this.prisma.logActivity(
+        actor.id,
+        role === 'Employee' ? 'revoked_role' : `promoted_to_${role.toLowerCase().replace(' ', '_')}`,
+        'employee',
+        employeeId,
+      );
     }
   }
 }

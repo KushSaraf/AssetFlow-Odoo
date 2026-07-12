@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
@@ -17,6 +18,36 @@ export class AuthService {
   async signup(data: any) {
     // 1. Ignore any client-sent role, always Employee.
     const { name, email, password } = data;
+
+    // Server-side validation per ui-spec §7.1 (client checks are a UX
+    // nicety, never the source of truth).
+    if (!name?.trim()) {
+      throw new BadRequestException({
+        error: {
+          code: 'validation_error',
+          message: 'Full name is required.',
+          field: 'name',
+        },
+      });
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new BadRequestException({
+        error: {
+          code: 'validation_error',
+          message: 'Enter a valid email address.',
+          field: 'email',
+        },
+      });
+    }
+    if (!password || password.length < 8) {
+      throw new BadRequestException({
+        error: {
+          code: 'validation_error',
+          message: 'Password must be at least 8 characters.',
+          field: 'password',
+        },
+      });
+    }
 
     // Check if email already exists
     const existing = await this.prisma.employee.findUnique({

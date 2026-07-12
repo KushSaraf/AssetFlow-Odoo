@@ -10,10 +10,13 @@ import StatusBadge from '../../../components/StatusBadge';
 import { AlertCircle, Calendar, PlusCircle, Wrench } from 'lucide-react';
 
 interface DashboardKpis {
-  totalAssets: number;
-  myAllocations: number;
-  pendingMaintenance: number;
-  openAudits: number;
+  assetsAvailable: number;
+  assetsAllocated: number;
+  maintenanceToday: number;
+  activeBookings: number;
+  pendingTransfers: number;
+  upcomingReturns: number;
+  overdueReturns: number;
 }
 
 interface Allocation {
@@ -105,27 +108,37 @@ export default function DashboardPage() {
         <p className="text-xs text-[#6C757D] mt-0.5">Here is your operational snapshot for today.</p>
       </div>
 
-      {/* KPI Cards Row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Cards Row — the six cards from the brief (ui-spec §3 Screen 2) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <StatCard
-          count={getKpiValue(kpis?.totalAssets)}
-          label="Total Assets Registered"
-          onClick={() => router.push('/app/assets')}
+          count={getKpiValue(kpis?.assetsAvailable)}
+          label="Assets Available"
+          onClick={() => router.push('/app/assets?status=Available')}
         />
         <StatCard
-          count={getKpiValue(kpis?.myAllocations)}
-          label="My Active Allocations"
-          onClick={() => router.push('/app/allocations')}
+          count={getKpiValue(kpis?.assetsAllocated)}
+          label="Assets Allocated"
+          onClick={() => router.push('/app/assets?status=Allocated')}
         />
         <StatCard
-          count={getKpiValue(kpis?.pendingMaintenance)}
-          label="Pending Maintenance Requests"
+          count={getKpiValue(kpis?.maintenanceToday)}
+          label="Maintenance Today"
           onClick={() => router.push('/app/maintenance')}
         />
         <StatCard
-          count={getKpiValue(kpis?.openAudits)}
-          label="Active Audit Cycles"
-          onClick={() => router.push('/app/audit')}
+          count={getKpiValue(kpis?.activeBookings)}
+          label="Active Bookings"
+          onClick={() => router.push('/app/bookings')}
+        />
+        <StatCard
+          count={getKpiValue(kpis?.pendingTransfers)}
+          label="Pending Transfers"
+          onClick={() => router.push('/app/allocations')}
+        />
+        <StatCard
+          count={getKpiValue(kpis?.upcomingReturns)}
+          label="Upcoming Returns"
+          onClick={() => router.push('/app/allocations')}
         />
       </div>
 

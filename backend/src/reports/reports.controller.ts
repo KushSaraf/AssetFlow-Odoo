@@ -1,4 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 
@@ -12,6 +13,12 @@ export class ReportsController {
     return this.reportsService.getAssetUtilization(filters);
   }
 
+  @Roles('Admin', 'Asset Manager', 'Department Head')
+  @Get('due-for-maintenance')
+  getDueForMaintenance() {
+    return this.reportsService.getDueForMaintenance();
+  }
+
   @Roles('Admin', 'Asset Manager')
   @Get('depreciation')
   getDepreciation(@Query() filters: any) {
@@ -20,7 +27,13 @@ export class ReportsController {
 
   @Roles('Admin', 'Asset Manager')
   @Get('export')
-  exportReport(@Query('type') type: string) {
-    return this.reportsService.exportReport(type);
+  async exportReport(@Query('type') type: string, @Res() res: Response) {
+    const { filename, csv } = await this.reportsService.exportReport(type);
+    res
+      .set({
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+      })
+      .send(csv);
   }
 }

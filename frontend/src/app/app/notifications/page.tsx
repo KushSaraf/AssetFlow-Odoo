@@ -20,6 +20,15 @@ interface Notification {
   created_at: string;
 }
 
+interface ActivityLogEntry {
+  id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  created_at: string;
+  actor: { id: string; name: string; role: string };
+}
+
 type TabType = 'notifications' | 'activity';
 
 export default function NotificationsPage() {
@@ -33,6 +42,13 @@ export default function NotificationsPage() {
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: () => apiFetch('/notifications'),
+  });
+
+  // Fetch the real append-only activity log (who did what, when)
+  const { data: activityLog = [] } = useQuery<ActivityLogEntry[]>({
+    queryKey: ['activity-log'],
+    queryFn: () => apiFetch('/activity-log'),
+    enabled: activeTab === 'activity',
   });
 
   // Mutations
@@ -191,15 +207,29 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      {/* Tab B: System Activity Log */}
+      {/* Tab B: System Activity Log (Actor / Action / Entity / Timestamp per ui-spec §3 Screen 10) */}
       {activeTab === 'activity' && (
         <DataTable
           columns={[
-            { header: 'Trigger / Event Type', accessor: (row) => <span className="font-semibold text-xs text-[#714B67]">{row.type}</span> },
-            { header: 'Action Details / Event Message', accessor: (row) => row.payload.message || `System Update: ${row.type}` },
             {
-              header: 'Event Timestamp',
-              accessor: (row) => (
+              header: 'Actor',
+              accessor: (row: ActivityLogEntry) => (
+                <span className="font-semibold text-xs text-[#1F1F1F]">
+                  {row.actor?.name}
+                  <span className="ml-1.5 text-[10px] font-normal text-[#6C757D]">({row.actor?.role})</span>
+                </span>
+              ),
+            },
+            {
+              header: 'Action',
+              accessor: (row: ActivityLogEntry) => (
+                <span className="text-xs text-[#714B67] font-semibold">{row.action.replace(/_/g, ' ')}</span>
+              ),
+            },
+            { header: 'Entity', accessor: (row: ActivityLogEntry) => row.entity_type.replace(/_/g, ' ') },
+            {
+              header: 'Timestamp',
+              accessor: (row: ActivityLogEntry) => (
                 <div className="flex items-center gap-1.5">
                   <History size={12} className="text-[#6C757D]" />
                   <span>{new Date(row.created_at).toLocaleString()}</span>
@@ -207,8 +237,7 @@ export default function NotificationsPage() {
               ),
             },
           ]}
-          // Display all notifications as system activity logs (since they represent all system-level updates)
-          data={notifications}
+          data={activityLog}
           emptyMessage="No activity logs found."
         />
       )}

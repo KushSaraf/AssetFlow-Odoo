@@ -36,20 +36,25 @@ export class MaintenanceController {
   @Post(':id/assign-technician')
   assignTechnician(
     @Param('id') id: string,
+    @Req() req: any,
     @Body('technician') technician: string,
   ) {
-    return this.maintenanceService.assignTechnician(id, technician);
+    return this.maintenanceService.assignTechnician(id, req.user, technician);
   }
 
   @Roles('Asset Manager', 'Admin')
   @Post(':id/start')
-  start(@Param('id') id: string) {
-    return this.maintenanceService.start(id);
+  start(@Param('id') id: string, @Req() req: any) {
+    return this.maintenanceService.start(id, req.user);
   }
 
   @Roles('Asset Manager', 'Admin')
   @Post(':id/resolve')
-  resolve(@Param('id') id: string, @Body('resolution_notes') notes: string) {
-    return this.maintenanceService.resolve(id, notes);
+  resolve(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body('resolution_notes') notes: string,
+  ) {
+    return this.maintenanceService.resolve(id, req.user, notes);
   }
 }

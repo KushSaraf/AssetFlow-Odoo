@@ -19,6 +19,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
     case 'Approved':
     case 'Resolved':
     case 'Verified':
+    case 'Re-allocated':
       colors = { bg: 'bg-[#28A745]/15', text: 'text-[#28A745]' };
       break;
 

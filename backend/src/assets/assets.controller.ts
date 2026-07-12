@@ -7,6 +7,7 @@ import {
   Body,
   Param,
   Query,
+  Req,
 } from '@nestjs/common';
 import { AssetsService } from './assets.service';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -16,8 +17,8 @@ export class AssetsController {
   constructor(private readonly assetsService: AssetsService) {}
 
   @Get()
-  findAll(@Query() filters: any) {
-    return this.assetsService.findAll(filters);
+  findAll(@Req() req: any, @Query() filters: any) {
+    return this.assetsService.findAll(req.user, filters);
   }
 
   @Get('tag/:tag')
@@ -32,8 +33,8 @@ export class AssetsController {
 
   @Roles('Admin', 'Asset Manager')
   @Post()
-  create(@Body() body: any) {
-    return this.assetsService.create(body);
+  create(@Req() req: any, @Body() body: any) {
+    return this.assetsService.create(req.user, body);
   }
 
   @Roles('Admin', 'Asset Manager')
@@ -44,8 +45,12 @@ export class AssetsController {
 
   @Roles('Admin', 'Asset Manager')
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body('status') status: string) {
-    return this.assetsService.updateStatus(id, status);
+  updateStatus(
+    @Param('id') id: string,
+    @Req() req: any,
+    @Body('status') status: string,
+  ) {
+    return this.assetsService.updateStatus(id, req.user, status);
   }
 
   @Get(':id/allocation-history')

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -7,12 +12,34 @@ export class CategoriesService {
 
   async findAll() {
     return this.prisma.asset_category.findMany({
-      include: { fields: true },
+      include: { fields: true, _count: { select: { assets: true } } },
     });
   }
 
   async create(data: { name: string; description?: string }) {
-    return this.prisma.asset_category.create({ data });
+    if (!data.name?.trim()) {
+      throw new BadRequestException({
+        error: {
+          code: 'validation_error',
+          message: 'Category name is required.',
+          field: 'name',
+        },
+      });
+    }
+    try {
+      return await this.prisma.asset_category.create({ data });
+    } catch (e: any) {
+      if (e?.code === 'P2002') {
+        throw new ConflictException({
+          error: {
+            code: 'validation_error',
+            message: 'A category with this name already exists.',
+            field: 'name',
+          },
+        });
+      }
+      throw e;
+    }
   }
 
   async createField(
